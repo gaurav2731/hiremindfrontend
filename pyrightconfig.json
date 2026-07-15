@@ -1,0 +1,7 @@
+{
+  "venvPath": "backend",
+  "venv": "uv_venv",
+  "extraPaths": [
+    "backend"
+  ]
+}
