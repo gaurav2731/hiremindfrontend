@@ -8,3 +8,7 @@ __pycache__/
 *.sqlite3
 *.docx
 test_ci.db
+uv.zip
+uv_bin/
+*.log
+.freebuff*
