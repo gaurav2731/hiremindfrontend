@@ -260,6 +260,121 @@ h1, h2, h3, h4, h5 { font-weight: 700; letter-spacing: -0.02em; }
 .score-ring-value { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 800; }
 .score-ring-label { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
 
+/* ─── MARKDOWN RENDERER ─── */
+.markdown-content {
+  font-size: 14px; line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+/* Headers */
+.markdown-content h1 { font-size: 20px; font-weight: 800; margin: 18px 0 10px; letter-spacing: -0.03em; line-height: 1.3; color: var(--text-primary); }
+.markdown-content h2 {
+  font-size: 17px; font-weight: 700; margin: 16px 0 8px;
+  letter-spacing: -0.02em; line-height: 1.3; color: var(--text-primary);
+  border-bottom: 1px solid var(--border); padding-bottom: 6px;
+}
+.markdown-content h3 { font-size: 15px; font-weight: 700; margin: 14px 0 6px; letter-spacing: -0.01em; line-height: 1.4; color: var(--text-primary); }
+.markdown-content h4 { font-size: 14px; font-weight: 700; margin: 12px 0 6px; letter-spacing: -0.01em; color: var(--text-primary); }
+
+/* Paragraphs & Text */
+.markdown-content p { margin-bottom: 10px; }
+.markdown-content strong { font-weight: 700; color: #f1f5f9; }
+.markdown-content em { font-style: italic; }
+
+/* Lists */
+.markdown-content ul, .markdown-content ol {
+  padding-left: 22px; margin-bottom: 10px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.markdown-content li { margin-bottom: 2px; line-height: 1.65; }
+.markdown-content li > p { margin-bottom: 0; display: inline; }
+
+/* Horizontal Rule */
+.markdown-content hr {
+  border: none; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  margin: 20px 0; border-radius: 2px;
+}
+
+/* Blockquotes */
+.markdown-content blockquote {
+  border-left: 3px solid var(--accent-blue);
+  padding: 10px 16px; margin: 12px 0;
+  background: rgba(59, 130, 246, 0.06);
+  border-radius: 0 10px 10px 0;
+  color: #93c5fd; font-size: 14px;
+}
+.markdown-content blockquote p { margin-bottom: 0; }
+
+/* Inline Code */
+.markdown-inline-code, .markdown-content code:not(pre code) {
+  background: rgba(244, 114, 182, 0.12);
+  padding: 2px 7px; border-radius: 5px;
+  font-size: 13px;
+  font-family: 'JetBrains Mono', monospace;
+  color: #f472b6; font-weight: 500;
+}
+
+/* Code Block */
+.markdown-pre, .markdown-content pre {
+  background: var(--bg-secondary);
+  padding: 16px 18px; border-radius: 10px;
+  overflow-x: auto; margin: 12px 0;
+  border: 1px solid var(--border);
+  font-size: 13px; line-height: 1.65;
+  font-family: 'JetBrains Mono', monospace;
+  color: #e2e8f0;
+}
+.markdown-pre code, .markdown-content pre code {
+  background: none; padding: 0; color: inherit;
+  font-weight: 400;
+}
+
+/* Table */
+.markdown-table-wrapper, .markdown-content table {
+  width: 100%; overflow-x: auto;
+  margin: 12px 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.markdown-content table {
+  display: block; overflow-x: auto;
+  border: none;
+}
+.markdown-content thead {
+  background: var(--bg-elevated);
+}
+.markdown-content th {
+  padding: 10px 14px; text-align: left; font-weight: 700;
+  color: var(--text-primary); font-size: 12px;
+  letter-spacing: 0.04em; text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.markdown-content td {
+  padding: 10px 14px; color: var(--text-secondary);
+  vertical-align: top; line-height: 1.5;
+}
+.markdown-content tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s ease;
+}
+.markdown-tr:hover, .markdown-content tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+.markdown-content tr:last-child { border-bottom: none; }
+
+/* Links */
+.markdown-content a {
+  color: var(--accent-blue);
+  text-decoration: none; font-weight: 500;
+  transition: color 0.2s;
+}
+.markdown-content a:hover {
+  color: #93c5fd;
+  text-decoration: underline;
+}
+
 /* ─── CHAT ─── */
 .chat-container { display: flex; flex-direction: column; height: calc(100vh - 180px); max-height: 700px; }
 .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }

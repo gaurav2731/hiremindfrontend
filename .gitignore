@@ -13,6 +13,9 @@ node_modules/
 dist/
 .vite/
 
+# Freebuff
+.freebuff/
+
 # IDE
 .vscode/
 .idea/
@@ -20,3 +23,4 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
+nul

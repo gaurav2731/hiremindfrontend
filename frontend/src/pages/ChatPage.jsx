@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { startSession, sendChat } from '../api/hiremind'
+import MarkdownRenderer from '../components/MarkdownRenderer'
 
 const FOCUS_OPTIONS = [
   'General Career Coaching',
@@ -14,6 +15,17 @@ const FOCUS_OPTIONS = [
   'Salary Negotiation',
 ]
 
+const PROFESSIONS = [
+  { value: 'Software Engineering', label: 'Software Engineering', icon: '💻' },
+  { value: 'Nursing', label: 'Nursing', icon: '🩺' },
+  { value: 'Data Science', label: 'Data Science', icon: '📊' },
+  { value: 'Product Management', label: 'Product Management', icon: '📱' },
+  { value: 'Marketing', label: 'Marketing', icon: '📈' },
+  { value: 'Finance', label: 'Finance', icon: '💰' },
+  { value: 'Human Resources', label: 'Human Resources', icon: '👥' },
+  { value: 'General', label: 'General', icon: '🎯' },
+]
+
 function Message({ msg }) {
   const isUser = msg.role === 'user'
   return (
@@ -22,7 +34,11 @@ function Message({ msg }) {
         {isUser ? '👤' : '🧠'}
       </div>
       <div className={`chat-bubble ${isUser ? 'user' : 'ai'}`}>
-        {msg.content}
+        {isUser ? (
+          msg.content
+        ) : (
+          <MarkdownRenderer content={msg.content} />
+        )}
       </div>
     </div>
   )
@@ -33,6 +49,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [focus, setFocus] = useState('General Career Coaching')
+  const [profession, setProfession] = useState('Software Engineering')
   const [sessionStarted, setSessionStarted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [starting, setStarting] = useState(false)
@@ -48,11 +65,11 @@ export default function ChatPage() {
     if (!resumeData || !jdData) return
     setStarting(true); setError(null)
     try {
-      await startSession(sessionId, resumeId, resumeData, jdData, focus)
+      await startSession(sessionId, resumeId, resumeData, jdData, focus, profession)
       setSessionStarted(true)
       setMessages([{
         role: 'assistant',
-        content: `Hi ${resumeData.name}! 👋 I'm your HireMind AI career coach. I'm here to help you prepare for the **${jdData.job_title}** role at **${jdData.company_name || 'the company'}**.\n\nCurrent focus: **${focus}**\n\nAsk me anything — interview questions, resume tips, skill gaps, mock feedback, or just tell me where you want to start!`
+        content: `Hi ${resumeData.name}! 👋 I'm your HireMind AI career coach. I'm here to help you prepare for the **${jdData.job_title}** role at **${jdData.company_name || 'the company'}**.\n\n**Profession:** ${profession}\n**Current focus:** ${focus}\n\nAsk me anything — interview questions, resume tips, skill gaps, mock feedback, or just tell me where you want to start!`
       }])
     } catch (e) {
       setError(e.response?.data?.detail || 'Failed to start session.')
@@ -95,22 +112,33 @@ export default function ChatPage() {
     <div className="fade-in">
       <div style={{ marginBottom: 20 }}>
         <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>💬 AI Career Coach</h1>
-        <p style={{ color: 'var(--text-secondary)' }}>Your personal coaching session — focused, grounded, and always honest.</p>
+        <p style={{ color: 'var(--text-secondary)' }}>Personal coaching for any profession — focused, grounded, and always honest.</p>
       </div>
 
       {!sessionStarted ? (
-        <div className="card" style={{ maxWidth: 560 }}>
+        <div className="card" style={{ maxWidth: 600 }}>
           <div style={{ fontSize: 40, marginBottom: 16 }}>🧠</div>
           <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Start Your Coaching Session</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 20 }}>
             Coaching for <strong>{resumeData.name}</strong> → <strong>{jdData.job_title}</strong>
           </p>
+
+          {/* Profession Selector */}
+          <div className="input-group" style={{ marginBottom: 16 }}>
+            <label className="input-label">Choose Your Profession</label>
+            <select className="select" value={profession} onChange={e => setProfession(e.target.value)}>
+              {PROFESSIONS.map(p => <option key={p.value} value={p.value}>{p.icon} {p.label}</option>)}
+            </select>
+          </div>
+
+          {/* Focus Selector */}
           <div className="input-group" style={{ marginBottom: 20 }}>
             <label className="input-label">Choose Your Focus Area</label>
             <select className="select" value={focus} onChange={e => setFocus(e.target.value)}>
               {FOCUS_OPTIONS.map(f => <option key={f} value={f}>{f}</option>)}
             </select>
           </div>
+
           {error && <div className="alert alert-error" style={{ marginBottom: 16 }}>❌ {error}</div>}
           <button className="btn btn-primary btn-full" onClick={handleStart} disabled={starting}>
             {starting ? <><span className="spinner" /> Starting...</> : '🚀 Start Session'}
@@ -124,9 +152,10 @@ export default function ChatPage() {
               <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--accent-green)' }} />
               <span style={{ fontSize: 14, fontWeight: 600 }}>AI Coach Active</span>
               <span className="badge badge-blue">{focus}</span>
+              <span className="badge badge-purple" style={{ fontSize: 11 }}>{profession}</span>
             </div>
             <button className="btn btn-ghost btn-sm" onClick={() => { setSessionStarted(false); setMessages([]) }}>
-              ↩ Change Focus
+              ↩ Change Settings
             </button>
           </div>
 

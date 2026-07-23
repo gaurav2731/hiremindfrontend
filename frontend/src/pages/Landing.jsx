@@ -19,10 +19,10 @@ export default function Landing() {
             predicts your interview questions, and coaches you to land the offer.
           </p>
           <div className="hero-actions">
-            <Link to="/resume" className="btn btn-primary btn-lg">
+            <Link to="/auth" className="btn btn-primary btn-lg">
               🚀 Start Free — Upload Resume
             </Link>
-            <Link to="/chat" className="btn btn-secondary btn-lg">
+            <Link to="/auth" className="btn btn-secondary btn-lg">
               💬 Try AI Coach
             </Link>
           </div>
@@ -100,7 +100,7 @@ export default function Landing() {
           <p style={{ color: 'var(--text-secondary)', fontSize: 16, marginBottom: 36 }}>
             Upload your resume and let HireMind AI do the heavy lifting.
           </p>
-          <Link to="/resume" className="btn btn-primary btn-lg pulse-glow">
+          <Link to="/auth" className="btn btn-primary btn-lg pulse-glow">
             🧠 Start Your AI Career Prep
           </Link>
         </div>

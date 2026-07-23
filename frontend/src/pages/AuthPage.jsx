@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { loginUser, registerUser } from '../api/hiremind'
+import { login as loginUser, register as registerUser } from '../api/hiremind'
 
 export default function AuthPage({ onAuth }) {
   const [tab, setTab] = useState('login')
@@ -22,7 +22,7 @@ export default function AuthPage({ onAuth }) {
         res = await registerUser(email, password, fullName)
       }
       const { access_token, user } = res.data
-      localStorage.setItem('hiremind_token', access_token)
+      localStorage.setItem('access_token', access_token)
       localStorage.setItem('hiremind_user', JSON.stringify(user))
       onAuth(access_token, user)
     } catch (e) {

@@ -1,21 +1,88 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
-import { generateQuestions } from '../api/hiremind'
+import { generateQuestions, getProfessions } from '../api/hiremind'
 
-const ROUND_TYPES = [
-  { value: 'HR', label: 'HR Round', icon: '🤝', desc: 'Motivation, culture fit, career goals' },
-  { value: 'Technical', label: 'Technical Round', icon: '⚙️', desc: 'Core tech concepts, problem-solving' },
-  { value: 'Coding', label: 'Coding Round', icon: '💻', desc: 'Data structures, algorithms, coding' },
-  { value: 'System Design', label: 'System Design', icon: '🏗️', desc: 'Architecture, scalability, design' },
-  { value: 'Behavioral', label: 'Behavioral Round', icon: '🧠', desc: 'STAR method, past experiences' },
-  { value: 'Managerial', label: 'Managerial Round', icon: '📊', desc: 'Leadership, team management' },
+const PROFESSIONS = [
+  { value: 'Software Engineering', label: 'Software Engineering', icon: '💻' },
+  { value: 'Nursing', label: 'Nursing', icon: '🩺' },
+  { value: 'Data Science', label: 'Data Science', icon: '📊' },
+  { value: 'Product Management', label: 'Product Management', icon: '📱' },
+  { value: 'Marketing', label: 'Marketing', icon: '📈' },
+  { value: 'Finance', label: 'Finance', icon: '💰' },
+  { value: 'Human Resources', label: 'Human Resources', icon: '👥' },
+  { value: 'General', label: 'General', icon: '🎯' },
 ]
+
+// Default rounds if backend isn't available
+const DEFAULT_ROUNDS = {
+  'Software Engineering': [
+    { value: 'HR', label: 'HR Round', icon: '🤝', desc: 'Motivation, culture fit, career goals' },
+    { value: 'Technical', label: 'Technical Round', icon: '⚙️', desc: 'Core CS concepts, problem-solving' },
+    { value: 'Coding', label: 'Coding Round', icon: '💻', desc: 'Data structures, algorithms, coding' },
+    { value: 'System Design', label: 'System Design', icon: '🏗️', desc: 'Architecture, scalability, design' },
+    { value: 'Behavioral', label: 'Behavioral Round', icon: '🧠', desc: 'STAR method, past experiences' },
+    { value: 'Managerial', label: 'Managerial Round', icon: '📊', desc: 'Leadership, team management' },
+  ],
+  'Nursing': [
+    { value: 'HR', label: 'HR Round', icon: '🤝', desc: 'Motivation, hospital fit, career goals' },
+    { value: 'Clinical Skills', label: 'Clinical Skills', icon: '🩺', desc: 'Patient assessment, procedures, critical thinking' },
+    { value: 'Medication Safety', label: 'Medication Safety', icon: '💊', desc: '5 Rights, dosage, adverse reactions' },
+    { value: 'Patient Communication', label: 'Patient Communication', icon: '💬', desc: 'Patient education, empathy, family interaction' },
+    { value: 'Behavioral', label: 'Behavioral Round', icon: '🧠', desc: 'Teamwork, conflict, prioritization' },
+    { value: 'Case Study', label: 'Clinical Scenario', icon: '🏥', desc: 'Real-world patient case analysis' },
+  ],
+  'Data Science': [
+    { value: 'HR', label: 'HR Round', icon: '🤝', desc: 'Motivation, culture fit, career goals' },
+    { value: 'Technical', label: 'Technical Round', icon: '⚙️', desc: 'Statistics, ML algorithms, probability' },
+    { value: 'Coding', label: 'Coding Round', icon: '💻', desc: 'Python, SQL, data manipulation' },
+    { value: 'System Design', label: 'ML System Design', icon: '🏗️', desc: 'Data pipelines, model deployment, scaling' },
+    { value: 'Case Study', label: 'Case Study', icon: '📊', desc: 'End-to-end data science problem' },
+    { value: 'Behavioral', label: 'Behavioral Round', icon: '🧠', desc: 'STAR method, past experiences' },
+  ],
+  'Product Management': [
+    { value: 'HR', label: 'HR Round', icon: '🤝', desc: 'Motivation, culture fit, career goals' },
+    { value: 'Case Study', label: 'Product Case Study', icon: '📊', desc: 'Strategy, prioritization, metrics' },
+    { value: 'Technical', label: 'Technical Awareness', icon: '⚙️', desc: 'Tech understanding, feasibility' },
+    { value: 'Behavioral', label: 'Behavioral Round', icon: '🧠', desc: 'Leadership, stakeholder management' },
+    { value: 'Managerial', label: 'Managerial Round', icon: '📊', desc: 'Team leadership, strategy' },
+  ],
+  'Marketing': [
+    { value: 'HR', label: 'HR Round', icon: '🤝', desc: 'Motivation, culture fit, career goals' },
+    { value: 'Case Study', label: 'Marketing Case Study', icon: '📊', desc: 'Campaign strategy, analytics' },
+    { value: 'Portfolio Review', label: 'Portfolio Review', icon: '🎨', desc: 'Past campaigns, creative work' },
+    { value: 'Domain Knowledge', label: 'Domain Knowledge', icon: '📚', desc: 'Digital marketing, SEO, channels' },
+    { value: 'Behavioral', label: 'Behavioral Round', icon: '🧠', desc: 'Teamwork, client handling' },
+  ],
+  'Finance': [
+    { value: 'HR', label: 'HR Round', icon: '🤝', desc: 'Motivation, firm fit, ethics' },
+    { value: 'Technical', label: 'Technical Round', icon: '⚙️', desc: 'Financial modeling, accounting, math' },
+    { value: 'Case Study', label: 'Case Study', icon: '📊', desc: 'Deal analysis, investment memo' },
+    { value: 'Domain Knowledge', label: 'Domain Knowledge', icon: '📚', desc: 'Markets, regulations, products' },
+    { value: 'Behavioral', label: 'Behavioral Round', icon: '🧠', desc: 'Fit, teamwork, handle pressure' },
+  ],
+  'Human Resources': [
+    { value: 'HR', label: 'HR Fit', icon: '🤝', desc: 'HR philosophy, culture building' },
+    { value: 'Domain Knowledge', label: 'Domain Knowledge', icon: '📚', desc: 'Employment law, compensation, L&D' },
+    { value: 'Case Study', label: 'HR Case Study', icon: '📊', desc: 'Employee relations, org design' },
+    { value: 'Behavioral', label: 'Behavioral Round', icon: '🧠', desc: 'Conflict resolution, empathy' },
+    { value: 'Managerial', label: 'Managerial Round', icon: '📊', desc: 'HR strategy, team leadership' },
+  ],
+  'General': [
+    { value: 'HR', label: 'HR Round', icon: '🤝', desc: 'Motivation, culture fit, career goals' },
+    { value: 'Behavioral', label: 'Behavioral Round', icon: '🧠', desc: 'STAR method, past experiences' },
+    { value: 'Domain Knowledge', label: 'Domain Knowledge', icon: '📚', desc: 'Role-specific expertise' },
+    { value: 'Case Study', label: 'Problem Solving', icon: '💡', desc: 'Analytical thinking approach' },
+    { value: 'Managerial', label: 'Managerial Round', icon: '📊', desc: 'Leadership, team management' },
+  ],
+}
 
 const difficultyColor = { Easy: 'badge-green', Medium: 'badge-orange', Hard: 'badge-red' }
 
 export default function InterviewPage() {
   const { resumeData, jdData, resumeId } = useApp()
+  const [profession, setProfession] = useState('Software Engineering')
+  const [rounds, setRounds] = useState(DEFAULT_ROUNDS['Software Engineering'])
   const [selectedRound, setSelectedRound] = useState(null)
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
@@ -23,11 +90,40 @@ export default function InterviewPage() {
   const [expandedIdx, setExpandedIdx] = useState(null)
   const navigate = useNavigate()
 
+  // Load professions from backend on mount
+  useEffect(() => {
+    getProfessions()
+      .then(res => {
+        const data = res.data?.professions
+        if (data) {
+          // Update rounds from backend data if available
+          const prof = data[profession]
+          if (prof?.rounds?.length > 0) {
+            setRounds(prof.rounds)
+          }
+        }
+      })
+      .catch(() => {
+        // Use defaults — no big deal
+      })
+  }, [])
+
+  const handleProfessionChange = (newProfession) => {
+    setProfession(newProfession)
+    setSelectedRound(null)
+    setResult(null)
+    setError(null)
+    setExpandedIdx(null)
+    // Update rounds based on selection
+    const newRounds = DEFAULT_ROUNDS[newProfession] || DEFAULT_ROUNDS['General']
+    setRounds(newRounds)
+  }
+
   const handleGenerate = async (round) => {
     setSelectedRound(round)
     setLoading(true); setError(null); setResult(null)
     try {
-      const res = await generateQuestions(resumeId, resumeData, jdData, round.value)
+      const res = await generateQuestions(resumeId, resumeData, jdData, round.value, 10, profession)
       setResult(res.data)
     } catch (e) {
       setError(e.response?.data?.detail || 'Failed to generate questions.')
@@ -52,32 +148,54 @@ export default function InterviewPage() {
     <div className="fade-in">
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>🎤 Interview Prep</h1>
-        <p style={{ color: 'var(--text-secondary)' }}>Select a round to get AI-generated questions tailored to your profile and the target JD.</p>
+        <p style={{ color: 'var(--text-secondary)' }}>Select your profession and a round type to get AI-generated questions tailored to your profile.</p>
+      </div>
+
+      {/* Profession Selector */}
+      <div style={{ marginBottom: 24 }}>
+        <label className="input-label" style={{ marginBottom: 8, display: 'block' }}>Choose Your Profession</label>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {PROFESSIONS.map(p => (
+            <button
+              key={p.value}
+              className={`btn ${profession === p.value ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => handleProfessionChange(p.value)}
+              style={{ fontSize: 13 }}
+            >
+              {p.icon} {p.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Round Selector */}
-      <div className="features-grid" style={{ marginBottom: 28 }}>
-        {ROUND_TYPES.map(round => (
-          <div
-            key={round.value}
-            className={`card feature-card`}
-            style={{
-              cursor: 'pointer',
-              borderColor: selectedRound?.value === round.value ? 'var(--accent-blue)' : undefined,
-              background: selectedRound?.value === round.value ? 'var(--accent-blue-glow)' : undefined,
-            }}
-            onClick={() => handleGenerate(round)}
-          >
-            <div className="feature-icon blue" style={{ marginBottom: 10 }}>{round.icon}</div>
-            <div className="feature-title" style={{ fontSize: 16 }}>{round.label}</div>
-            <div className="feature-desc">{round.desc}</div>
-            {selectedRound?.value === round.value && loading && (
-              <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--accent-blue)' }}>
-                <span className="spinner" /> Generating...
-              </div>
-            )}
-          </div>
-        ))}
+      <div style={{ marginBottom: 28 }}>
+        <label className="input-label" style={{ marginBottom: 8, display: 'block' }}>
+          Interview Round — <strong style={{ color: 'var(--text-primary)' }}>{profession}</strong>
+        </label>
+        <div className="features-grid">
+          {rounds.map(round => (
+            <div
+              key={round.value}
+              className={`card feature-card`}
+              style={{
+                cursor: 'pointer',
+                borderColor: selectedRound?.value === round.value ? 'var(--accent-blue)' : undefined,
+                background: selectedRound?.value === round.value ? 'var(--accent-blue-glow)' : undefined,
+              }}
+              onClick={() => handleGenerate(round)}
+            >
+              <div className="feature-icon blue" style={{ marginBottom: 10 }}>{round.icon}</div>
+              <div className="feature-title" style={{ fontSize: 16 }}>{round.label}</div>
+              <div className="feature-desc">{round.desc}</div>
+              {selectedRound?.value === round.value && loading && (
+                <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--accent-blue)' }}>
+                  <span className="spinner" /> Generating...
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       {error && <div className="alert alert-error" style={{ marginBottom: 20 }}>❌ {error}</div>}

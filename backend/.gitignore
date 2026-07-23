@@ -1,0 +1,10 @@
+venv/
+uv_venv/
+__pycache__/
+*.pyc
+.env
+.chroma/
+*.db
+*.sqlite3
+*.docx
+test_ci.db

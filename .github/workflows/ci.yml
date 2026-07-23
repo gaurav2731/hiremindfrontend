@@ -1,0 +1,126 @@
+# ─── Required GitHub Secrets ─────────────────────────────────────────────
+# VERCEL_TOKEN            — Vercel Personal Access Token (from vercel.com/account/tokens)
+# FRONTEND_VERCEL_PROJECT_ID — Vercel Project ID for frontend (from Vercel dashboard)
+# BACKEND_VERCEL_PROJECT_ID  — Vercel Project ID for backend
+# OPENAI_API_KEY          — (Optional) Needed for full test coverage
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: 20
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  # ─── Backend Tests ─────────────────────────────────────────────────
+  backend-test:
+    name: Backend Tests (Python)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: ./backend/requirements.txt
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Tests
+        run: |
+          python -m pytest tests/ -v --tb=short
+        env:
+          DATABASE_URL: sqlite:///./test_ci.db
+          SECRET_KEY: ci-test-secret-key
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || '' }}
+
+      - name: Cleanup CI Artifacts
+        run: rm -f test_ci.db *.sqlite3
+
+  # ─── Frontend Build + Test ──────────────────────────────────────────
+  frontend-test:
+    name: Frontend (Lint + Test + Build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ./frontend/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Tests
+        run: npx vitest run --reporter verbose
+
+      - name: Run Production Build
+        run: npx vite build --logLevel error
+
+  # ─── Vercel Deploy (main branch only) ──────────────────────────────
+  deploy:
+    name: Deploy to Vercel
+    needs: [backend-test, frontend-test]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        project:
+          - name: frontend
+            dir: ./frontend
+            vercel-project-id: ${{ secrets.FRONTEND_VERCEL_PROJECT_ID }}
+          - name: backend
+            dir: ./backend
+            vercel-project-id: ${{ secrets.BACKEND_VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel Environment
+        run: |
+          vercel pull \
+            --yes \
+            --environment=production \
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --cwd=${{ matrix.project.dir }}
+
+      - name: Deploy to Vercel (Production)
+        run: |
+          vercel deploy \
+            --prod \
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --cwd=${{ matrix.project.dir }} \
+            --yes

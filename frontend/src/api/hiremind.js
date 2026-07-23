@@ -34,26 +34,31 @@ export const analyzeJobDescription = (text, url) =>
   apiClient.post('/job/analyze', { text, url })
 
 // ─── Interview ───────────────────────────────────────────────────────────
-export const startSession = (sessionId, resumeId, resumeData, jdData, focus) =>
+export const startSession = (sessionId, resumeId, resumeData, jdData, focus, profession) =>
   apiClient.post('/interview/session/start', {
     session_id: sessionId,
     resume_id: resumeId,
     resume_data: resumeData,
     jd_data: jdData,
     focus,
+    profession,
   })
 
 export const sendChat = (sessionId, message) =>
   apiClient.post('/interview/chat', { session_id: sessionId, message })
 
-export const generateQuestions = (resumeId, resumeData, jdData, roundType, numQuestions = 10) =>
+export const generateQuestions = (resumeId, resumeData, jdData, roundType, numQuestions = 10, profession) =>
   apiClient.post('/interview/questions/generate', {
     resume_id: resumeId,
     resume_data: resumeData,
     jd_data: jdData,
     round_type: roundType,
     num_questions: numQuestions,
+    profession,
   })
+
+export const getProfessions = () =>
+  apiClient.get('/interview/professions')
 
 // ─── Health ──────────────────────────────────────────────────────────────
 export const checkHealth = () => apiClient.get('/health')

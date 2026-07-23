@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import {
   uploadResume, analyzeJobDescription, tailorResume, downloadResume,
@@ -154,6 +155,7 @@ function StepIndicator({ current, completed }) {
 }
 
 export default function MainApp() {
+  const navigate = useNavigate()
   const { resumeData, setResumeData, jdData, setJdData, resumeId, setResumeId, sessionId, reset } = useApp()
   const [step, setStep] = useState(() => {
     const saved = parseInt(localStorage.getItem('hiremind_step') || '0')
@@ -198,9 +200,27 @@ export default function MainApp() {
   const [messages, setMessages] = useState(() => {
     try { return JSON.parse(localStorage.getItem('hiremind_messages')) || [] } catch { return [] }
   })
+  const [profileOpen, setProfileOpen] = useState(false)
+  const userRef = useRef(null)
+  const storedUser = (() => {
+    try { return JSON.parse(localStorage.getItem('hiremind_user')) } catch { return null }
+  })()
+  const userName = storedUser?.full_name || storedUser?.email?.split('@')[0] || ''
+  const userEmail = storedUser?.email || ''
   const [chatInput, setChatInput] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
   const messagesEndRef = useRef(null)
+
+  // Close profile dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (userRef.current && !userRef.current.contains(e.target)) {
+        setProfileOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
@@ -325,6 +345,22 @@ export default function MainApp() {
     } finally { setChatLoading(false) }
   }
 
+  const handleLogout = () => {
+    // Clear all auth data
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('hiremind_user')
+    localStorage.removeItem('hiremind_resume')
+    localStorage.removeItem('hiremind_jd')
+    localStorage.removeItem('hiremind_resume_id')
+    localStorage.removeItem('hiremind_session_id')
+    localStorage.removeItem('hiremind_step')
+    localStorage.removeItem('hiremind_tailor')
+    localStorage.removeItem('hiremind_messages')
+    localStorage.removeItem('hiremind_session_started')
+    localStorage.removeItem('hiremind_focus')
+    navigate('/auth', { replace: true })
+  }
+
   const handleReset = () => {
     reset()
     setStep(0)
@@ -357,10 +393,70 @@ export default function MainApp() {
           <div style={{ width: 34, height: 34, background: 'var(--gradient-brand)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🧠</div>
           <span style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.03em', background: 'var(--gradient-brand)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>HireMind AI</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {resumeData && <span style={{ fontSize: 12, padding: '4px 10px', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 20, color: '#34d399' }}>✓ {resumeData.name}</span>}
-          {jdData && <span style={{ fontSize: 12, padding: '4px 10px', background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 20, color: '#60a5fa' }}>✓ {jdData.job_title}</span>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {resumeData && <span style={{ fontSize: 12, padding: '3px 10px', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 20, color: '#34d399' }}>✓ {resumeData.name}</span>}
+          {jdData && <span style={{ fontSize: 12, padding: '3px 10px', background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 20, color: '#60a5fa' }}>✓ {jdData.job_title}</span>}
           <button onClick={handleReset} style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>↺ Reset</button>
+
+          {/* ── Profile Dropdown ── */}
+          <div ref={userRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => setProfileOpen(!profileOpen)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                background: 'var(--bg-elevated)', border: '1px solid var(--border)',
+                borderRadius: 10, padding: '5px 12px 5px 5px',
+                color: 'var(--text-primary)', fontSize: 13, fontWeight: 600,
+                cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                transition: 'all 0.2s',
+              }}
+            >
+              <div style={{
+                width: 28, height: 28, borderRadius: 7,
+                background: 'var(--gradient-brand)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 13, fontWeight: 700, color: 'white',
+              }}>
+                {userName ? userName.charAt(0).toUpperCase() : '?'}
+              </div>
+              <span style={{ maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {userName || 'User'}
+              </span>
+              <span style={{ fontSize: 10, color: 'var(--text-muted)', transition: 'transform 0.2s', transform: profileOpen ? 'rotate(180deg)' : 'none' }}>▾</span>
+            </button>
+
+            {profileOpen && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 6px)', right: 0,
+                background: 'var(--bg-card)', border: '1px solid var(--border)',
+                borderRadius: 12, padding: '8px', minWidth: 200,
+                boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
+                animation: 'fadeInUp 0.15s ease', zIndex: 200,
+              }}>
+                {/* User info */}
+                <div style={{ padding: '8px 10px', borderBottom: '1px solid var(--border)', marginBottom: 4 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700 }}>{userName || 'User'}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{userEmail || ''}</div>
+                </div>
+
+                {/* Logout */}
+                <button
+                  onClick={() => { setProfileOpen(false); handleLogout() }}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '10px 12px', borderRadius: 8, fontSize: 13, fontWeight: 500,
+                    color: '#f87171', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                    background: 'transparent', border: 'none',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.1)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  🚪 Sign Out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </nav>
 

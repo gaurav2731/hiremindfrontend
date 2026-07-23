@@ -1,0 +1,28 @@
+{
+  "buildCommand": "pip install -r requirements.txt",
+  "outputDirectory": ".",
+  "framework": null,
+  "functions": {
+    "api/index.py": {
+      "runtime": "python3.12",
+      "maxDuration": 30
+    }
+  },
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "api/index.py"
+    }
+  ],
+  "env": {
+    "DATABASE_URL": "@database_url",
+    "OPENAI_API_KEY": "@openai_api_key",
+    "SECRET_KEY": "@secret_key",
+    "FRONTEND_ORIGIN": "@frontend_origin",
+    "LLM_MODEL": "@llm_model",
+    "LLM_BASE_URL": "@llm_base_url",
+    "ALGORITHM": "@algorithm",
+    "JWT_ALGORITHM": "@jwt_algorithm",
+    "ACCESS_TOKEN_EXPIRE_MINUTES": "@access_token_expire_minutes"
+  }
+}
